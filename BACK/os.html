@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optimal Page Replacement Algorithm</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #ffccf9, #b3e5fc);
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+            max-width: 600px;
+            width: 90%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            text-align: left;
+            font-weight: bold;
+        }
+
+        input, button {
+            padding: 10px;
+            width: calc(100% - 22px);
+            margin: 5px 0 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: #ff4081;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+        }
+
+        button:hover {
+            background-color: #f50057;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #e1f5fe;
+            color: #0277bd;
+        }
+
+        .miss {
+            background-color: #ffcdd2;
+            color: #c62828;
+        }
+
+        .hit {
+            background-color: #c8e6c9;
+            color: #2e7d32;
+        }
+
+        #pageFaultRatio {
+            font-weight: bold;
+            margin-top: 20px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Optimal Page Replacement Algorithm</h1>
+        <label for="pageReferences">Page References (comma-separated):</label>
+        <input type="text" id="pageReferences" placeholder="e.g., 7,0,1,2,0,3,0,4,2,3,0,3,2,3">
+        <label for="frameCount">Number of Frames:</label>
+        <input type="number" id="frameCount" placeholder="e.g., 4">
+        <button onclick="runOptimalAlgorithm()">Run Algorithm</button>
+        <div id="output">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Step</th>
+                        <th>Page Reference</th>
+                        <th>Frames</th>
+                        <th>Result (Hit/Miss)</th>
+                    </tr>
+                </thead>
+                <tbody id="resultTable">
+                    <!-- Results will appear here -->
+                </tbody>
+            </table>
+            <p id="pageFaultRatio"></p>
+        </div>
+    </div>
+
+    <script>
+        function runOptimalAlgorithm() {
+            const pageReferences = document.getElementById("pageReferences").value.split(",").map(Number);
+            const frameCount = parseInt(document.getElementById("frameCount").value);
+
+            if (pageReferences.length === 0 || isNaN(frameCount) || frameCount <= 0) {
+                alert("Please provide valid page references and a frame count.");
+                return;
+            }
+
+            const frames = [];
+            let pageFaults = 0;
+            const tableBody = document.getElementById("resultTable");
+            tableBody.innerHTML = "";
+
+            pageReferences.forEach((page, step) => {
+                const row = document.createElement("tr");
+                let frameState = [...frames];
+
+                if (frames.includes(page)) {
+                    row.innerHTML = `
+                        <td>${step + 1}</td>
+                        <td>${page}</td>
+                        <td>${frameState.join(", ")}</td>
+                        <td class="hit">Hit</td>
+                    `;
+                } else {
+                    pageFaults++;
+                    if (frames.length < frameCount) {
+                        frames.push(page);
+                    } else {
+                        // Optimal Replacement Logic
+                        let furthest = -1;
+                        let replaceIndex = -1;
+
+                        for (let i = 0; i < frames.length; i++) {
+                            const nextUse = pageReferences.slice(step + 1).indexOf(frames[i]);
+                            if (nextUse === -1) {
+                                replaceIndex = i;
+                                break;
+                            } else if (nextUse > furthest) {
+                                furthest = nextUse;
+                                replaceIndex = i;
+                            }
+                        }
+
+                        frames[replaceIndex] = page;
+                    }
+
+                    frameState = [...frames];
+                    row.innerHTML = `
+                        <td>${step + 1}</td>
+                        <td>${page}</td>
+                        <td>${frameState.join(", ")}</td>
+                        <td class="miss">Miss</td>
+                    `;
+                }
+
+                tableBody.appendChild(row);
+            });
+
+            const pageFaultRatio = (pageFaults / pageReferences.length).toFixed(2);
+            document.getElementById("pageFaultRatio").innerText = `Page Fault Ratio: ${pageFaults} / ${pageReferences.length} = ${pageFaultRatio}`;
+        }
+    </script>
+</body>
+</html>

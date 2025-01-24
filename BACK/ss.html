@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LRU Page Replacement Algorithm</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #ffccf9, #b3e5fc);
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            width: 90%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            margin: 15px 0;
+        }
+
+        input, button {
+            padding: 10px;
+            width: calc(100% - 20px);
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            background-color: #ff4081;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+        }
+
+        button:hover {
+            background-color: #f50057;
+        }
+
+        #output {
+            text-align: left;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #e1f5fe;
+            color: #0277bd;
+        }
+
+        td.page-fault {
+            background-color: #ffcdd2;
+            color: #c62828;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>LRU Page Replacement</h1>
+        <div class="input-group">
+            <input type="text" id="pageReferences" placeholder="Enter page references (e.g., 7, 0, 1, 2, 0, 3)">
+            <input type="number" id="frameSize" placeholder="Enter frame size">
+        </div>
+        <button onclick="calculateLRU()">Calculate</button>
+        <div id="output"></div>
+    </div>
+
+    <script>
+        function calculateLRU() {
+            const pageReferencesInput = document.getElementById("pageReferences").value;
+            const frameSize = parseInt(document.getElementById("frameSize").value);
+
+            if (!pageReferencesInput || isNaN(frameSize) || frameSize <= 0) {
+                document.getElementById("output").innerHTML = "<p>Please enter valid inputs!</p>";
+                return;
+            }
+
+            const pages = pageReferencesInput.split(",").map(Number);
+            const frames = [];
+            const pageFaults = [];
+            let faultCount = 0;
+
+            pages.forEach((page, index) => {
+                if (!frames.includes(page)) {
+                    faultCount++;
+                    if (frames.length < frameSize) {
+                        frames.push(page);
+                    } else {
+                        // LRU: Find the least recently used page
+                        let lruIndex = 0;
+                        let leastRecentlyUsed = Infinity;
+
+                        for (let i = 0; i < frames.length; i++) {
+                            const lastUsed = pages.slice(0, index).lastIndexOf(frames[i]);
+                            if (lastUsed < leastRecentlyUsed) {
+                                leastRecentlyUsed = lastUsed;
+                                lruIndex = i;
+                            }
+                        }
+
+                        frames[lruIndex] = page;
+                    }
+                    pageFaults.push(true);
+                } else {
+                    pageFaults.push(false);
+                }
+            });
+
+            displayResults(pages, frames, pageFaults, faultCount, frameSize);
+        }
+
+        function displayResults(pages, frames, pageFaults, faultCount, frameSize) {
+            let outputHtml = `<h3>Total Page Faults: ${faultCount}</h3>`;
+            outputHtml += `<table>
+                            <tr>
+                                <th>Step</th>
+                                ${pages.map((_, i) => `<th>${i + 1}</th>`).join("")}
+                            </tr>
+                            <tr>
+                                <th>Page</th>
+                                ${pages.map(page => `<td>${page}</td>`).join("")}
+                            </tr>`;
+
+            for (let i = 0; i < frameSize; i++) {
+                outputHtml += "<tr><th>Frame</th>";
+                pages.forEach((_, j) => {
+                    outputHtml += `<td>${frames[i] && frames[i][j] ? frames[i][j] : ""}</td>`;
+                });
+                outputHtml += "</tr>";
+            }
+
+            outputHtml += `<tr>
+                            <th>Fault</th>
+                            ${pageFaults.map(fault => `<td class="${fault ? "page-fault" : ""}">${fault ? "Yes" : "No"}</td>`).join("")}
+                        </tr>`;
+            outputHtml += "</table>";
+
+            document.getElementById("output").innerHTML = outputHtml;
+        }
+    </script>
+</body>
+</html>
